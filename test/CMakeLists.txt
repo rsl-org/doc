@@ -1,0 +1,1 @@
+add_sources(rsldoc_example_test PUBLIC main.cpp)

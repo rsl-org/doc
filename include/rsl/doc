@@ -1,0 +1,54 @@
+#pragma once
+#include <memory>
+#include <string>
+#include <unordered_set>
+#include <vector>
+#include <iostream>
+#include <meta>
+
+namespace rsl::doc {
+
+class NamedEntity {
+public:
+  NamedEntity()          = default;
+  virtual ~NamedEntity() = default;
+  virtual void print(std::string_view path = "") const;
+  virtual std::string to_json(int indent = 0) const;
+};
+
+class Namespace : public NamedEntity {
+    std::vector<std::unique_ptr<NamedEntity>> children;
+
+public:
+  void print(std::string_view path = "") const override;
+  std::string to_json(int indent = 0) const override;
+
+  Namespace() = default;
+  explicit Namespace(std::string_view name) {}
+  virtual ~Namespace() = default;
+
+  template <std::meta::info NS>
+  static std::unique_ptr<Namespace> scan() {
+    auto* target = new Namespace(identifier_of(NS));
+    template for (constexpr auto E : std::define_static_array(
+                      members_of(NS, std::meta::access_context::unchecked()))) {
+      if constexpr (!has_identifier(E))
+        continue;
+
+      if constexpr (is_namespace(E)) {
+        target->children.emplace_back(scan<E>());
+      } else {
+        target->children.emplace_back(std::make_unique<NamedEntity>());
+      }
+    }
+    return std::unique_ptr<Namespace>(target);
+  }
+};
+
+void run(std::unique_ptr<Namespace> ns, int argc, char** argv);
+}  // namespace rsl::doc
+
+#define ENABLE_DOCS(NS)                                           \
+  int main(int argc, char** argv) {                               \
+    rsl::doc::run(rsl::doc::Namespace::scan<^^NS>(), argc, argv); \
+  }

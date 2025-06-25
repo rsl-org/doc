@@ -2,8 +2,8 @@ from conan import ConanFile
 from conan.tools.cmake import CMakeToolchain, CMake, cmake_layout, CMakeDeps
 
 
-class pkgRecipe(ConanFile):
-    name = "mypkg"
+class rsldocRecipe(ConanFile):
+    name = "rsl-doc"
     version = "0.1"
     package_type = "library"
 
@@ -29,6 +29,9 @@ class pkgRecipe(ConanFile):
     def configure(self):
         if self.options.shared:
             self.options.rm_safe("fPIC")
+    
+    def requirements(self):
+        self.requires("rsl-util/0.1")
 
     def layout(self):
         cmake_layout(self)
@@ -49,5 +52,5 @@ class pkgRecipe(ConanFile):
         cmake.install()
 
     def package_info(self):
-        self.cpp_info.libs = ["mypkg"]
+        self.cpp_info.libs = ["rsldoc"]
 
